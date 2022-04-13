@@ -36,6 +36,7 @@
 import { Component, Element, Host, h, Listen, Method, Prop } from '@stencil/core';
 import state from '../../utils/editStore';
 import { getProp } from '@esri/solution-common';
+import * as monaco from "monaco-editor";
 
 @Component({
   tag: 'json-editor',
@@ -100,6 +101,18 @@ export class JsonEditor {
   //  Lifecycle
   //
   //--------------------------------------------------------------------------
+
+  constructor() {
+    (window as any).MonacoEnvironment = {
+      getWorkerUrl: function (workerId, label) {
+        console.log("label: " + label)
+        return `data:text/javascript;charset=utf-8,${encodeURIComponent(`
+              self.MonacoEnvironment = { baseUrl: '${window.location.origin}/' };
+              importScripts('${window.location.origin}/solutions-components/assets/monaco-editor/min/vs/base/worker/${workerId}');
+          `)}`;
+      }
+    };
+  }
 
   render() {
     return (
@@ -289,6 +302,7 @@ export class JsonEditor {
    */
   _initEditor(): void {
     // Set up embedded editor
+    //console.log(editor)
     if (monaco && monaco.editor) {
       this._editor = monaco.editor.create(document.getElementById(`${this.instanceid}-container`), {
         model: this.model,
@@ -362,10 +376,12 @@ export class JsonEditor {
       return;
     }
 
-    const owner = model.getModeId();
-    const markers = monaco.editor.getModelMarkers({ owner });
+    // TODO after changing from require to import getModeId is not available for some reason
+    // const owner = model.getModeId();
+    // const markers = monaco.editor.getModelMarkers({ owner });
+    // this.hasErrors = markers.length > 0;
 
-    this.hasErrors = markers.length > 0;
+    this.hasErrors = false;
   }
 
   /**
